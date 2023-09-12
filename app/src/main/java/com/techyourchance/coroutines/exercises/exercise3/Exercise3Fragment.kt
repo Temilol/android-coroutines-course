@@ -43,7 +43,7 @@ class Exercise3Fragment : BaseFragment() {
 
         edtUserId = view.findViewById(R.id.edt_user_id)
         edtUserId.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {            }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 btnGetReputation.isEnabled = !s.isNullOrEmpty()
@@ -55,11 +55,24 @@ class Exercise3Fragment : BaseFragment() {
         btnGetReputation = view.findViewById(R.id.btn_get_reputation)
         btnGetReputation.setOnClickListener {
             logThreadInfo("button callback")
+
+            var benchmarkDurationSeconds = 0
+
             job = coroutineScope.launch {
+                while (true) {
+                    logThreadInfo("updateRemainingTime: $benchmarkDurationSeconds seconds")
+                    benchmarkDurationSeconds += 1
+                    delay(1000)
+                }
+            }
+            coroutineScope.launch {
                 btnGetReputation.isEnabled = false
                 val reputation = getReputationForUser(edtUserId.text.toString())
+                logThreadInfo("benchmark Duration Seconds: $benchmarkDurationSeconds")
+                job?.cancel()
                 Toast.makeText(requireContext(), "reputation: $reputation", Toast.LENGTH_SHORT).show()
                 btnGetReputation.isEnabled = true
+                txtElapsedTime.text = "benchmark Duration Seconds: $benchmarkDurationSeconds"
             }
         }
 
@@ -68,8 +81,10 @@ class Exercise3Fragment : BaseFragment() {
 
     override fun onStop() {
         super.onStop()
-        job?.cancel()
-        btnGetReputation.isEnabled = true
+        coroutineScope.coroutineContext.cancelChildren()
+        job?.apply {
+            btnGetReputation.isEnabled = true
+        }
     }
 
     private suspend fun getReputationForUser(userId: String): Int {
