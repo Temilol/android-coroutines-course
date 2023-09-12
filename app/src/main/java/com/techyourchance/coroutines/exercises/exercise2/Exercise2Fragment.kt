@@ -15,6 +15,7 @@ import com.techyourchance.coroutines.exercises.exercise1.GetReputationEndpoint
 import com.techyourchance.coroutines.home.ScreenReachableFromHome
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -28,6 +29,8 @@ class Exercise2Fragment : BaseFragment() {
     private lateinit var btnGetReputation: Button
 
     private lateinit var getReputationEndpoint: GetReputationEndpoint
+
+    private var job: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,8 +56,10 @@ class Exercise2Fragment : BaseFragment() {
             logThreadInfo("button callback")
             coroutineScope.launch {
                 btnGetReputation.isEnabled = false
+                edtUserId.isEnabled = false
                 val reputation = getReputationForUser(edtUserId.text.toString())
                 Toast.makeText(requireContext(), "reputation: $reputation", Toast.LENGTH_SHORT).show()
+                edtUserId.isEnabled = true
                 btnGetReputation.isEnabled = true
             }
         }
@@ -71,6 +76,13 @@ class Exercise2Fragment : BaseFragment() {
 
     private fun logThreadInfo(message: String) {
         ThreadInfoLogger.logThreadInfo(message)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        job?.cancel()
+        btnGetReputation.isEnabled = true
+        edtUserId.isEnabled = true
     }
 
     companion object {
